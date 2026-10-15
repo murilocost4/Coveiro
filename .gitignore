@@ -1,0 +1,50 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Multiplayer Play Mode (clones dos jogadores virtuais)
+/[Ll]ibrary/VP/
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Gerados pela Unity
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+*.apk
+*.aab
+*.unitypackage
+crashlytics-build.properties
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Conteúdo de exemplo do template da Unity (não faz parte do jogo)
+/[Aa]ssets/TutorialInfo/
+/[Aa]ssets/TutorialInfo.meta
+/[Aa]ssets/Readme.asset
+/[Aa]ssets/Readme.asset.meta

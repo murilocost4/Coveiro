@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7db12b51041a4b199293d55261d2756, type: 3}
+  m_Name: Pa
+  m_EditorClassIdentifier: Assembly-CSharp::OCoveiro.Data.WeaponData
+  displayName: "P\xE1"
+  light:
+    damage: 10
+    staminaCost: 12
+    windup: 0.12
+    active: 0.08
+    recovery: 0.3
+    chainDelay: 0.1
+    reach: 2
+    arcAngle: 140
+    knockback: 2.5
+    lunge: 2.5
+    stagger: 0
+  comboLength: 3
+  finisherKnockbackMultiplier: 2
+  heavyChargeTime: 0.6
+  chargeMoveMultiplier: 0.35
+  heavy:
+    damage: 30
+    staminaCost: 30
+    windup: 0.1
+    active: 0.1
+    recovery: 0.55
+    chainDelay: 0
+    reach: 2.3
+    arcAngle: 120
+    knockback: 7
+    lunge: 4
+    stagger: 1
+  litDamageMultiplier: 1.25

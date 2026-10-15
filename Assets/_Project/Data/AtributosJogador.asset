@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebb38f947eb684212a9779756a46a0a8, type: 3}
+  m_Name: AtributosJogador
+  m_EditorClassIdentifier: Assembly-CSharp::OCoveiro.Data.PlayerStatsData
+  maxHealth: 100
+  hitStun: 0.3
+  heavyHitStun: 0.5
+  hitKnockback: 5
+  maxStamina: 100
+  staminaRegenPerSecond: 30
+  staminaRegenDelay: 0.8
+  dodgeCost: 20
+  dodgeDistance: 4.5
+  dodgeDuration: 0.35
+  iFrameDuration: 0.3
+  dodgeRecovery: 0.08
+  flaskCount: 3
+  flaskHeal: 40
+  flaskUseTime: 1
+  healMoveMultiplier: 0.3
+  maxOil: 100
+  oilDrainPerSecond: 4
+  lanternRadius: 7
+  lanternIntensity: 3
+  downedDuration: 3
