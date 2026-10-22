@@ -1,16 +1,21 @@
 using System.Collections.Generic;
 using System.IO;
+using OCoveiro.AI;
 using OCoveiro.Combat;
 using OCoveiro.Core;
 using OCoveiro.Data;
 using OCoveiro.Network;
 using OCoveiro.Player;
 using OCoveiro.UI;
+using OCoveiro.World;
+using Unity.AI.Navigation;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using Unity.Netcode.Transports.UTP;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Rendering;
 
 namespace OCoveiro.EditorTools
@@ -223,6 +228,249 @@ namespace OCoveiro.EditorTools
             CreatePart("Lamina", pivot, new Vector3(0f, 0f, 1.22f), new Vector3(0.34f, 0.04f, 0.36f),
                 GetOrCreateMaterial("Ferro", new Color(0.46f, 0.47f, 0.5f)));
             return pivot;
+        }
+
+        // ================================================================ 5. Semana 3
+
+        private const string EnemyDataFolder = DataFolder + "/Inimigos";
+        private const string EnemyPrefabFolder = Root + "/Prefabs/Inimigos";
+
+        [MenuItem("O Coveiro/5. Atualizar para a Semana 3 (inimigos)", priority = 21)]
+        public static void UpgradeToWeek3()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+            // Garante que a semana 2 já foi aplicada.
+            var player = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+            if (player == null || player.GetComponent<PlayerCombat>() == null) UpgradeToWeek2();
+
+            var errante = GetOrCreateEnemyPrefab("Errante", GetOrCreateEnemyData("Errante", d =>
+            {
+                d.displayName = "Errante";
+                d.maxHealth = 30f; d.poise = 25f; d.staggerDuration = 0.7f;
+                d.chaseSpeed = 2.2f; d.turnSpeed = 240f;
+                d.detectionRadius = 8f; d.loseRadius = 14f; d.needsLineOfSight = true;
+                d.attackRange = 1.7f; d.attackWindup = 0.9f; d.attackActive = 0.12f; d.attackRecovery = 0.8f;
+                d.attackCooldown = 0.8f; d.attackDamage = 15f; d.attackReach = 2f; d.attackArc = 100f;
+                d.attackKnockback = 5f; d.attackLunge = 2f;
+            }), new Color(0.32f, 0.36f, 0.29f), ghost: false, size: 0.95f, hunch: 14f, eyes: false);
+
+            var vigia = GetOrCreateEnemyPrefab("ErranteVigia", GetOrCreateEnemyData("ErranteVigia", d =>
+            {
+                d.displayName = "Errante Vigia";
+                d.maxHealth = 45f; d.poise = 30f; d.staggerDuration = 0.6f;
+                d.chaseSpeed = 2.6f; d.turnSpeed = 280f;
+                d.detectionRadius = 10f; d.loseRadius = 16f; d.needsLineOfSight = true;
+                d.attackRange = 1.8f; d.attackWindup = 0.8f; d.attackActive = 0.12f; d.attackRecovery = 0.7f;
+                d.attackCooldown = 0.7f; d.attackDamage = 18f; d.attackReach = 2.1f; d.attackArc = 110f;
+                d.attackKnockback = 5.5f; d.attackLunge = 2.2f;
+                d.alertsOthers = true; d.alertRadius = 14f; d.alertDuration = 1.1f;
+            }), new Color(0.22f, 0.22f, 0.25f), ghost: false, size: 1.1f, hunch: 4f, eyes: true);
+
+            var espectro = GetOrCreateEnemyPrefab("Espectro", GetOrCreateEnemyData("Espectro", d =>
+            {
+                d.displayName = "Espectro";
+                d.maxHealth = 20f; d.poise = 15f; d.staggerDuration = 0.5f;
+                d.movement = EnemyMovement.Ghost;
+                d.chaseSpeed = 3.2f; d.turnSpeed = 420f;
+                d.detectionRadius = 9f; d.loseRadius = 15f; d.needsLineOfSight = false;
+                d.attackRange = 1.6f; d.attackWindup = 0.55f; d.attackActive = 0.1f; d.attackRecovery = 0.6f;
+                d.attackCooldown = 1f; d.attackDamage = 12f; d.attackReach = 1.9f; d.attackArc = 120f;
+                d.attackKnockback = 3f; d.attackLunge = 3f;
+                d.spectral = true; d.flankFromBehind = true;
+            }), new Color(0.62f, 0.74f, 0.9f), ghost: true, size: 0.85f, hunch: 0f, eyes: false);
+
+            var scene = EditorSceneManager.OpenScene(TestScenePath, OpenSceneMode.Single);
+            EnsureNavMesh();
+            EnsureEnemies(errante, vigia, espectro);
+            EnsureSpectralDemo();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[O Coveiro] Semana 3 pronta: 3 tipos de inimigo, NavMesh no chão e o nicho com a parede ilusória. Aperte Play.");
+        }
+
+        private static EnemyData GetOrCreateEnemyData(string fileName, System.Action<EnemyData> configure)
+        {
+            string path = $"{EnemyDataFolder}/{fileName}.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<EnemyData>(path);
+            if (existing != null) return existing; // não sobrescreve ajustes feitos no Inspector
+
+            EnsureFolder(EnemyDataFolder);
+            var data = ScriptableObject.CreateInstance<EnemyData>();
+            configure(data);
+            AssetDatabase.CreateAsset(data, path);
+            AssetDatabase.SaveAssets();
+            return data;
+        }
+
+        private static GameObject GetOrCreateEnemyPrefab(string fileName, EnemyData data, Color color,
+                                                         bool ghost, float size, float hunch, bool eyes)
+        {
+            string path = $"{EnemyPrefabFolder}/{fileName}.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+            EnsureFolder(EnemyPrefabFolder);
+
+            var root = new GameObject(fileName);
+            root.AddComponent<NetworkObject>();
+
+            var netTransform = root.AddComponent<NetworkTransform>(); // autoridade do host (padrão)
+            netTransform.SyncRotAngleX = false;
+            netTransform.SyncRotAngleZ = false;
+            netTransform.SyncScaleX = false;
+            netTransform.SyncScaleY = false;
+            netTransform.SyncScaleZ = false;
+
+            var collider = root.AddComponent<CapsuleCollider>();
+            collider.center = new Vector3(0f, size, 0f);
+            collider.height = 2f * size;
+            collider.radius = 0.42f * size;
+            collider.isTrigger = ghost; // o Espectro atravessa jogadores e paredes
+
+            if (ghost)
+            {
+                root.AddComponent<GhostMotor>();
+            }
+            else
+            {
+                var agent = root.AddComponent<NavMeshAgent>();
+                agent.radius = 0.42f * size;
+                agent.height = 2f * size;
+                agent.speed = data.chaseSpeed;
+                agent.angularSpeed = 360f;
+                agent.acceleration = 20f;
+                agent.stoppingDistance = 0.2f;
+                agent.enabled = false; // ligado só no host, pelo NavMeshMotor
+                root.AddComponent<NavMeshMotor>();
+            }
+
+            var modifier = root.AddComponent<NavMeshModifier>();
+            modifier.ignoreFromBuild = true; // inimigo não vira buraco no NavMesh
+
+            var health = root.AddComponent<Health>();
+            SetEnum(health, "team", (int)Team.Enemies);
+            SetFloat(health, "maxHealth", data.maxHealth);
+            SetRef(root.AddComponent<EnemyBrain>(), "data", data);
+
+            // Visual provisório: pivô no pé, para cair e cambalear a partir da base.
+            var visual = new GameObject("Visual").transform;
+            visual.SetParent(root.transform, false);
+            visual.localPosition = ghost ? new Vector3(0f, 0.25f, 0f) : Vector3.zero;
+            visual.localRotation = Quaternion.Euler(hunch, 0f, 0f);
+
+            var skin = ghost
+                ? GetOrCreateMaterial($"Pele{fileName}", color, color * 0.6f)
+                : GetOrCreateMaterial($"Pele{fileName}", color);
+            CreatePart("Corpo", visual, new Vector3(0f, size, 0f), new Vector3(0.8f, size, 0.65f) * 1f, skin, PrimitiveType.Capsule);
+            CreatePart("Cabeca", visual, new Vector3(0f, size * 2f + 0.05f, 0.08f), Vector3.one * 0.42f * size, skin, PrimitiveType.Sphere);
+
+            if (eyes)
+            {
+                var eyeMaterial = GetOrCreateMaterial("OlhoVigia", new Color(1f, 0.15f, 0.1f), new Color(2f, 0.2f, 0.1f));
+                CreatePart("Olho E", visual, new Vector3(-0.09f, size * 2f + 0.1f, 0.24f), Vector3.one * 0.08f, eyeMaterial, PrimitiveType.Sphere);
+                CreatePart("Olho D", visual, new Vector3(0.09f, size * 2f + 0.1f, 0.24f), Vector3.one * 0.08f, eyeMaterial, PrimitiveType.Sphere);
+            }
+
+            var arm = new GameObject("BracoPivo").transform;
+            arm.SetParent(visual, false);
+            arm.localPosition = new Vector3(0.42f * size, size * 1.55f, 0.05f);
+            arm.localRotation = Quaternion.Euler(60f, 0f, 0f);
+            CreatePart("Braco", arm, new Vector3(0f, 0f, 0.45f * size), new Vector3(0.16f, 0.16f, 0.9f * size), skin);
+
+            var look = root.AddComponent<EnemyVisual>();
+            SetRef(look, "body", visual);
+            SetRef(look, "arm", arm);
+
+            var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
+            Object.DestroyImmediate(root);
+            Debug.Log($"[O Coveiro] Inimigo salvo em {path}");
+            return prefab;
+        }
+
+        /// <summary>NavMesh gerado ao abrir a cena, a partir dos colliders do chão e das paredes.</summary>
+        private static void EnsureNavMesh()
+        {
+            if (Object.FindAnyObjectByType<NavMeshSurface>() != null) return;
+
+            var ground = GameObject.Find("Chao");
+            if (ground == null)
+            {
+                Debug.LogWarning("[O Coveiro] Objeto 'Chao' não encontrado; o NavMesh não foi configurado.");
+                return;
+            }
+
+            var surface = ground.AddComponent<NavMeshSurface>();
+            surface.collectObjects = CollectObjects.All;
+            surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
+            ground.AddComponent<RuntimeNavMeshBaker>();
+        }
+
+        private static void EnsureEnemies(GameObject errante, GameObject vigia, GameObject espectro)
+        {
+            if (Object.FindAnyObjectByType<EnemyBrain>() != null) return;
+
+            // Na raiz da cena: objetos de rede não devem ficar dentro de pastas que não são de rede.
+            Place(errante, "Errante 1", new Vector3(-9f, 0f, 15f));
+            Place(errante, "Errante 2", new Vector3(7f, 0f, 17f));
+            Place(vigia, "Errante Vigia", new Vector3(0f, 0f, 21f));
+            Place(espectro, "Espectro 1", new Vector3(-14f, 0f, 24f));
+            Place(espectro, "Espectro 2", new Vector3(15f, 0f, 9f));
+        }
+
+        private static void Place(GameObject prefab, string instanceName, Vector3 position)
+        {
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instance.name = instanceName;
+            instance.transform.position = position;
+            Vector3 toCenter = -position;
+            toCenter.y = 0f;
+            instance.transform.rotation = Quaternion.LookRotation(toCenter.normalized, Vector3.up);
+        }
+
+        /// <summary>Nicho de pedra fechado por uma parede ilusória + uma runa no chão que só aparece na luz.</summary>
+        private static void EnsureSpectralDemo()
+        {
+            if (Object.FindAnyObjectByType<SpectralObject>() != null) return;
+
+            var stone = GetOrCreateMaterial("Pedra", new Color(0.32f, 0.32f, 0.34f));
+            var ghostStone = GetOrCreateMaterial("PedraIlusoria", new Color(0.3f, 0.3f, 0.34f));
+            var rune = GetOrCreateMaterial("Runa", new Color(0.55f, 0.85f, 1f), new Color(0.6f, 1.4f, 2f));
+            var relic = GetOrCreateMaterial("Reliquia", new Color(1f, 0.8f, 0.4f), new Color(1.5f, 1f, 0.3f));
+
+            var root = new GameObject("Demo Espectral").transform;
+            root.position = new Vector3(18f, 0f, -10f);
+
+            CreateSolid("Parede Fundo", root, new Vector3(3f, 1.5f, 0f), new Vector3(0.6f, 3f, 4.6f), stone);
+            CreateSolid("Parede Norte", root, new Vector3(1.5f, 1.5f, 2f), new Vector3(3.6f, 3f, 0.6f), stone);
+            CreateSolid("Parede Sul", root, new Vector3(1.5f, 1.5f, -2f), new Vector3(3.6f, 3f, 0.6f), stone);
+            CreatePart("Reliquia", root, new Vector3(2f, 0.5f, 0f), new Vector3(0.5f, 0.5f, 0.5f), relic);
+
+            // Parede ilusória: sólida no escuro, some quando a lanterna chega perto.
+            var illusory = CreateSolid("Parede Ilusoria", root, new Vector3(0f, 1.5f, 0f), new Vector3(0.6f, 3f, 3.4f), ghostStone);
+            SetEnum(illusory.AddComponent<SpectralObject>(), "mode", (int)SpectralMode.VanishesInLight);
+            illusory.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+
+            // Runa no chão: só aparece na luz e aponta o segredo.
+            var mark = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            mark.name = "Runa Espectral";
+            mark.transform.SetParent(root, false);
+            mark.transform.localPosition = new Vector3(-4f, 0.02f, 0f);
+            mark.transform.localScale = new Vector3(1.4f, 0.01f, 1.4f);
+            Object.DestroyImmediate(mark.GetComponent<Collider>());
+            mark.GetComponent<Renderer>().sharedMaterial = rune;
+            SetEnum(mark.AddComponent<SpectralObject>(), "mode", (int)SpectralMode.AppearsInLight);
+        }
+
+        private static GameObject CreateSolid(string name, Transform parent, Vector3 position, Vector3 scale, Material material)
+        {
+            var part = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            part.name = name;
+            part.transform.SetParent(parent, false);
+            part.transform.localPosition = position;
+            part.transform.localScale = scale;
+            part.GetComponent<Renderer>().sharedMaterial = material;
+            return part;
         }
 
         // ================================================================ Boneco de treino
@@ -450,7 +698,7 @@ namespace OCoveiro.EditorTools
             part.GetComponent<Renderer>().sharedMaterial = material;
         }
 
-        private static Material GetOrCreateMaterial(string name, Color color)
+        private static Material GetOrCreateMaterial(string name, Color color, Color? emission = null)
         {
             EnsureFolder(MaterialsFolder);
             string path = $"{MaterialsFolder}/{name}.mat";
@@ -463,6 +711,13 @@ namespace OCoveiro.EditorTools
 
             material = new Material(shader) { color = color };
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+            if (emission.HasValue)
+            {
+                // Brilho próprio: aparece mesmo no escuro (Espectro, runas, olhos do Vigia).
+                material.EnableKeyword("_EMISSION");
+                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                material.SetColor("_EmissionColor", emission.Value);
+            }
             AssetDatabase.CreateAsset(material, path);
             return material;
         }

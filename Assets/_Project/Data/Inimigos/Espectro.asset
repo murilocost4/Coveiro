@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37834a48c8e95472fa4dc4c421db8e97, type: 3}
+  m_Name: Espectro
+  m_EditorClassIdentifier: Assembly-CSharp::OCoveiro.Data.EnemyData
+  displayName: Espectro
+  maxHealth: 20
+  coopHealthMultiplier: 1.5
+  poise: 15
+  poiseResetTime: 1.5
+  staggerDuration: 0.5
+  knockbackResistance: 0
+  movement: 1
+  chaseSpeed: 3.2
+  turnSpeed: 420
+  detectionRadius: 9
+  loseRadius: 15
+  needsLineOfSight: 0
+  attackRange: 1.6
+  attackWindup: 0.55
+  attackActive: 0.1
+  attackRecovery: 0.6
+  attackCooldown: 1
+  attackDamage: 12
+  attackReach: 1.9
+  attackArc: 120
+  attackKnockback: 3
+  attackLunge: 3
+  heavyAttack: 0
+  spectral: 1
+  flankFromBehind: 1
+  alertsOthers: 0
+  alertRadius: 14
+  alertDuration: 1.1

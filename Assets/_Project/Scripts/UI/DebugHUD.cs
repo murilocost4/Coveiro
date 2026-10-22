@@ -1,3 +1,4 @@
+using OCoveiro.AI;
 using OCoveiro.Combat;
 using OCoveiro.Player;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace OCoveiro.UI
             }
 
             if (showControls) DrawControls();
+            DrawEnemyBars();
             if (local == null) return;
 
             var health = local.GetComponent<Health>();
@@ -59,6 +61,37 @@ namespace OCoveiro.UI
                     if (partnerLife != null && partnerLife.IsDowned) label += " (caído)";
                     DrawBar(x + width + 24f, y, 180f, partnerHealth.Normalized, HealthColor, label);
                 }
+            }
+        }
+
+        /// <summary>Barrinha sobre a cabeça dos inimigos feridos, e "!" quando o Vigia grita.</summary>
+        private static void DrawEnemyBars()
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+
+            foreach (var enemy in EnemyBrain.All)
+            {
+                if (enemy == null || enemy.Data == null || enemy.StateId == EnemyStateId.Dead) continue;
+                if (enemy.Data.spectral && !Lantern.IsLit(enemy.transform.position)) continue;
+
+                Vector3 screen = cam.WorldToScreenPoint(enemy.transform.position + Vector3.up * 2.6f);
+                if (screen.z <= 0f) continue;
+                float x = screen.x - 30f;
+                float y = Screen.height - screen.y;
+
+                if (enemy.StateId == EnemyStateId.Alert)
+                    GUI.Label(new Rect(screen.x - 4f, y - 22f, 20f, 20f), "!");
+
+                var health = enemy.Health;
+                if (health == null || health.Current >= health.Max) continue;
+
+                var previous = GUI.color;
+                GUI.color = BackColor;
+                GUI.DrawTexture(new Rect(x, y, 60f, 7f), Texture2D.whiteTexture);
+                GUI.color = HealthColor;
+                GUI.DrawTexture(new Rect(x + 1f, y + 1f, 58f * health.Normalized, 5f), Texture2D.whiteTexture);
+                GUI.color = previous;
             }
         }
 

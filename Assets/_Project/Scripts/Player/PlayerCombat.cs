@@ -383,7 +383,7 @@ namespace OCoveiro.Player
             hitTargets.Clear();
             bool anyHit = false;
             int count = Physics.OverlapSphereNonAlloc(origin + Vector3.up, attack.reach, hitBuffer,
-                Physics.AllLayers, QueryTriggerInteraction.Ignore);
+                Physics.AllLayers, QueryTriggerInteraction.Collide); // o Espectro usa collider "trigger"
 
             for (int i = 0; i < count; i++)
             {

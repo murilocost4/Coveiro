@@ -56,6 +56,20 @@ namespace OCoveiro.Player
             return false;
         }
 
+        /// <summary>Alguma parte de uma área está dentro da luz? (para objetos grandes, como passarelas)</summary>
+        public static bool IsLit(Bounds area)
+        {
+            foreach (var lantern in Active)
+            {
+                if (!lantern.IsOn) continue;
+                Vector3 source = lantern.LightPosition;
+                Vector3 offset = area.ClosestPoint(new Vector3(source.x, area.center.y, source.z)) - source;
+                offset.y = 0f;
+                if (offset.sqrMagnitude <= lantern.Radius * lantern.Radius) return true;
+            }
+            return false;
+        }
+
         private void Awake()
         {
             input = GetComponent<PlayerInputReader>();

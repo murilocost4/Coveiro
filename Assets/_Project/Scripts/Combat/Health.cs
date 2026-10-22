@@ -17,9 +17,12 @@ namespace OCoveiro.Combat
         private readonly NetworkVariable<float> max = new NetworkVariable<float>(100f);
 
         private IDamageFilter[] filters;
+        private bool maxOverridden;
 
         /// <summary>Disparado em TODOS os PCs quando o dano entra: (quantidade, direção, pesado).</summary>
         public event Action<float, Vector3, bool> Damaged;
+        /// <summary>Disparado só no host, com todos os detalhes do golpe (empurrão, atordoar, quem bateu).</summary>
+        public event Action<DamageInfo> DamagedServer;
         /// <summary>Disparado só no host quando a vida zera.</summary>
         public event Action DiedServer;
 
@@ -36,18 +39,23 @@ namespace OCoveiro.Combat
 
         public override void OnNetworkSpawn()
         {
-            if (!IsServer) return;
+            if (!IsServer || maxOverridden) return;
             max.Value = maxHealth;
             current.Value = maxHealth;
         }
 
-        /// <summary>Host: define a vida máxima (ex.: vinda do PlayerStatsData).</summary>
+        /// <summary>
+        /// Host: define a vida máxima (ex.: vinda do PlayerStatsData ou da escala do co-op).
+        /// refill = vida cheia; senão mantém a mesma porcentagem de vida.
+        /// </summary>
         public void SetMax(float value, bool refill = true)
         {
             if (!IsServer) return;
+            maxOverridden = true;
+
+            float ratio = refill ? 1f : Normalized;
             max.Value = Mathf.Max(1f, value);
-            if (refill) current.Value = max.Value;
-            else current.Value = Mathf.Min(current.Value, max.Value);
+            current.Value = max.Value * ratio;
         }
 
         public bool ApplyDamage(DamageInfo info)
@@ -59,6 +67,7 @@ namespace OCoveiro.Combat
 
             current.Value = Mathf.Max(0f, current.Value - info.Amount);
             DamagedRpc(info.Amount, info.Direction, info.Heavy);
+            DamagedServer?.Invoke(info);
 
             if (IsDead) DiedServer?.Invoke();
             return true;

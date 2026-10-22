@@ -48,3 +48,6 @@ Thumbs.db
 /[Aa]ssets/TutorialInfo.meta
 /[Aa]ssets/Readme.asset
 /[Aa]ssets/Readme.asset.meta
+
+# Zips baixados (os assets extraídos ficam em Assets/ThirdParty)
+/_Downloads/
