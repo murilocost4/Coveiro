@@ -13,6 +13,8 @@ namespace OCoveiro.Combat
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
         [SerializeField] private Color flashColor = Color.white;
+        [Tooltip("Acima de 1 clareia até modelos com textura (cor x textura).")]
+        [SerializeField] private float flashIntensity = 2.5f;
         [SerializeField] private float duration = 0.08f;
 
         private Health health;
@@ -60,8 +62,8 @@ namespace OCoveiro.Combat
                 }
 
                 block.Clear();
-                block.SetColor(BaseColorId, flashColor);
-                block.SetColor(ColorId, flashColor);
+                block.SetColor(BaseColorId, flashColor * flashIntensity);
+                block.SetColor(ColorId, flashColor * flashIntensity);
                 r.SetPropertyBlock(block);
             }
         }

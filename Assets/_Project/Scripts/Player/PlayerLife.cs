@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using OCoveiro.Combat;
+using OCoveiro.Core;
 using OCoveiro.Data;
 using Unity.Netcode;
 using UnityEngine;
@@ -19,15 +20,19 @@ namespace OCoveiro.Player
         private readonly NetworkVariable<bool> downed = new NetworkVariable<bool>(false);
 
         private Health health;
+        private CharacterAnimator anim;
         private float downedAt;
         private readonly List<Transform> bodies = new List<Transform>();
         private float tilt;
 
         public bool IsDowned => downed.Value;
 
+        private bool Animated => anim != null && anim.HasAnimator;
+
         private void Awake()
         {
             health = GetComponent<Health>();
+            anim = GetComponent<CharacterAnimator>();
 
             // Os corpos (Visual_Coveiro / Visual_Aprendiz) tombam quando o jogador cai.
             foreach (Transform child in transform)
@@ -36,12 +41,21 @@ namespace OCoveiro.Player
 
         public override void OnNetworkSpawn()
         {
+            downed.OnValueChanged += OnDownedChanged;
             if (IsServer) health.DiedServer += OnDiedServer;
         }
 
         public override void OnNetworkDespawn()
         {
+            downed.OnValueChanged -= OnDownedChanged;
             if (IsServer) health.DiedServer -= OnDiedServer;
+        }
+
+        /// <summary>Em todos os PCs: cai (animação de morte) ou levanta.</summary>
+        private void OnDownedChanged(bool previous, bool current)
+        {
+            if (!Animated) return;
+            anim.Play(current ? ShovelVisual.Death : ShovelVisual.StandUp, 0.1f);
         }
 
         private void OnDiedServer()
@@ -64,7 +78,9 @@ namespace OCoveiro.Player
                 }
             }
 
-            // Visual em todos os PCs: tomba e levanta suavemente.
+            if (Animated) return; // com modelo, quem tomba é a animação
+
+            // Visual em todos os PCs (cápsulas): tomba e levanta suavemente.
             tilt = Mathf.MoveTowards(tilt, downed.Value ? 1f : 0f, Time.deltaTime * 4f);
             var rotation = Quaternion.Euler(tilt * 80f, 0f, 0f);
             foreach (var body in bodies) body.localRotation = rotation;

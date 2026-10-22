@@ -36,6 +36,10 @@ MonoBehaviour:
   attackKnockback: 5
   attackLunge: 2
   heavyAttack: 0
+  attackAnimation: Melee_1H_Attack_Chop
+  alertAnimation: Skeletons_Taunt
+  staggerAnimation: Hit_B
+  deathAnimation: Skeletons_Death
   spectral: 0
   flankFromBehind: 0
   alertsOthers: 0

@@ -263,7 +263,8 @@ namespace OCoveiro.Player
             Enter(PlayerState.Dodging);
             mover.StartDash(direction, stats.dodgeDistance, stats.dodgeDuration);
             invulnerable.Value = true;
-            if (shovel != null) shovel.ResetPose();
+            if (shovel != null) shovel.PlayDodge(stats.dodgeDuration + stats.dodgeRecovery);
+            ActionVisualRpc(ActionDodge);
         }
 
         private void TryStartHeal()
@@ -271,7 +272,8 @@ namespace OCoveiro.Player
             if (flasks.Value <= 0 || health.Current >= health.Max) return;
             healApplied = false;
             Enter(PlayerState.Healing);
-            if (shovel != null) shovel.ResetPose();
+            if (shovel != null) shovel.PlayDrink(stats.flaskUseTime + 0.15f);
+            ActionVisualRpc(ActionDrink);
         }
 
         /// <summary>Troca de estado: desfaz o que o estado anterior travou e aplica as regras do novo.</summary>
@@ -439,6 +441,18 @@ namespace OCoveiro.Player
         {
             if (shovel != null && weapon != null)
                 shovel.PlayAttack((AttackKind)kind, step, weapon.Get((AttackKind)kind));
+        }
+
+        private const byte ActionDodge = 1;
+        private const byte ActionDrink = 2;
+
+        /// <summary>O parceiro vê a esquiva e o frasco (as animações não vão pela rede, só o aviso).</summary>
+        [Rpc(SendTo.NotOwner)]
+        private void ActionVisualRpc(byte action)
+        {
+            if (shovel == null || stats == null) return;
+            if (action == ActionDodge) shovel.PlayDodge(stats.dodgeDuration + stats.dodgeRecovery);
+            else if (action == ActionDrink) shovel.PlayDrink(stats.flaskUseTime + 0.15f);
         }
 
         [Rpc(SendTo.NotOwner)]

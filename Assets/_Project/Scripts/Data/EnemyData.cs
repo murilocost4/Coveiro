@@ -60,6 +60,13 @@ namespace OCoveiro.Data
         public float attackLunge = 2f;
         public bool heavyAttack;
 
+        [Header("Animações (nomes dos estados no Animator)")]
+        [Tooltip("O impacto desta animação é sincronizado com o fim do aviso (attackWindup).")]
+        public string attackAnimation = "Melee_1H_Attack_Chop";
+        public string alertAnimation = "Skeletons_Taunt";
+        public string staggerAnimation = "Hit_B";
+        public string deathAnimation = "Skeletons_Death";
+
         [Header("Especiais")]
         [Tooltip("Espectro: só aparece e só leva dano dentro da luz de uma lanterna.")]
         public bool spectral;
